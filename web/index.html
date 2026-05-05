@@ -85,40 +85,43 @@
           </div>
         </div>
 
-        <div class="console-deck" id="deck">
-          <audio id="audio" preload="none" crossorigin="anonymous" src="/stream">
-            Your browser does not support the audio element.
-            Open <a href="/stream">/stream</a> in VLC.
-          </audio>
+        <div class="console-deck" id="deck" data-component="stream-player" data-src="/stream" tabindex="0">
+          <noscript>
+            <p>Open <a href="/stream">/stream</a> in VLC or any audio player.</p>
+          </noscript>
 
           <div class="deck-row">
-            <button type="button" id="playBtn" class="xbtn play" aria-label="Play" aria-pressed="false">
+            <button type="button" id="playBtn" class="xbtn play" aria-label="Play" aria-pressed="false"
+                    data-action="toggle" data-ref="playBtn">
               <span class="ico ico-play" aria-hidden="true"></span>
               <span class="xbtn-label">PLAY</span>
             </button>
 
-            <button type="button" id="stopBtn" class="xbtn" aria-label="Stop">
+            <button type="button" id="stopBtn" class="xbtn" aria-label="Stop"
+                    data-action="stop">
               <span class="ico ico-stop" aria-hidden="true"></span>
               <span class="xbtn-label">STOP</span>
             </button>
 
             <div class="ticker" aria-live="polite">
-              <span class="ticker-tag" id="stateTag">IDLE</span>
-              <span class="ticker-text" id="stateText">PRESS PLAY TO TUNE IN</span>
-              <span class="ticker-time" id="elapsed">00:00:00</span>
+              <span class="ticker-tag" id="stateTag" data-ref="stateTag">IDLE</span>
+              <span class="ticker-text" id="stateText" data-ref="stateText">PRESS PLAY TO TUNE IN</span>
+              <span class="ticker-time" id="elapsed" data-ref="elapsed">00:00:00</span>
             </div>
           </div>
 
           <div class="deck-row deck-row-bottom">
-            <button type="button" id="muteBtn" class="xbtn small" aria-label="Mute" aria-pressed="false">
+            <button type="button" id="muteBtn" class="xbtn small" aria-label="Mute" aria-pressed="false"
+                    data-action="mute" data-ref="muteBtn">
               <span class="ico ico-spkr" aria-hidden="true"></span>
               <span class="xbtn-label">MUTE</span>
             </button>
 
             <label class="vol" for="vol">
               <span class="vol-label">VOL</span>
-              <input id="vol" type="range" min="0" max="100" value="80" step="1" aria-label="Volume">
-              <span class="vol-readout" id="volReadout">080</span>
+              <input id="vol" type="range" min="0" max="100" value="80" step="1" aria-label="Volume"
+                     data-ref="volume">
+              <span class="vol-readout" id="volReadout" data-ref="volumeReadout">080</span>
             </label>
           </div>
         </div>
