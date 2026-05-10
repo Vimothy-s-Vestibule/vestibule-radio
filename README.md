@@ -18,7 +18,9 @@ cp .env.example .env        # edit passwords
 docker compose up --build
 ```
 
-Stream at `http://localhost:8000/stream`. Status page at `http://localhost:8000`.
+Web player at `http://localhost:8080`. Direct stream at `http://localhost:8000/stream`. Status page at `http://localhost:8000`.
+
+The web container proxies `/stream` and `/status-json.xsl` to Icecast so the browser can use same-origin URLs.
 
 ## What's built
 
