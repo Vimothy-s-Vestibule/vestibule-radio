@@ -2,29 +2,41 @@
 
 How Vestibule Community Radio works.
 
+## Flow
+
+Solid arrows are built. Dashed arrows are planned.
+
 ```
-Discord Thread → Bot → Downloader → music/ + tracks.json → Liquidsoap → Icecast → Listeners
+                                  ┌──────────────────────────────────────┐
+                                  │                                      │
+   [planned]                      ▼                                      │
+Discord Thread ┄┄> Bot ┄┄> Downloader ┄┄> music/ + tracks.json           │
+                                                  │                       │
+                                                  ▼                       │
+                                              Liquidsoap ──> Icecast      │
+                                                                │         │
+                                                                ▼         │
+                                                            Traefik ──> Listeners
+                                                                ▲
+                                                                │
+                                                            Frontend (web/)
 ```
 
-## What's running now
+Today, the music in `music/` is added manually. Once the bot + downloader land, that step becomes automatic.
 
-**Liquidsoap** shuffles tracks from the `music/` directory, crossfades between them, normalizes volume, skips blanks, and outputs an MP3 stream.
+## Components
 
-**Icecast** receives the stream from Liquidsoap and serves it to listeners over HTTP at `/stream`. It also exposes metadata (current track, listener count) at `/status-json.xsl`.
-
-Both run via Docker Compose. Config is in `docker-compose.yml`, Liquidsoap script is in `streaming/radio.liq`.
-
-## What's not built yet
-
-**Discord bot** (Python, polling via cron). Connects to the music thread, regex-matches YouTube/Spotify links, deduplicates against `data/seen_links.json`, hands URLs to the downloader.
-
-**Audio downloader** (yt-dlp for YouTube, spotdl for Spotify). Downloads MP3 at 192kbps, reads ID3 tags with `mutagen`, writes metadata to `data/tracks.json`.
-
-**Web player**. An `<audio>` tag pointed at the stream, now-playing display, who posted the song, listener count, thumbs up/down.
-
-**Taste map**. Force-directed graph built from `tracks.json` showing who posted what and where tastes overlap.
-
-**Smart queue** (`pick_next.py`). Weighted random selection that avoids repeats, penalizes recently-played artists, and factors in listener votes from `data/feedback.json`. Integrates with Liquidsoap via `request.dynamic`.
+| Component | Status | Notes |
+|-----------|--------|-------|
+| Frontend (`web/`) | live | Static HTML/CSS/JS, no build step |
+| Reverse proxy (Traefik + Authentik) | live in prod, dev WIP | Routes `/`, `/stream`, `/status-json.xsl` to the right backend. Every route is gated by Authentik - the station is members-only. |
+| Stream server (Icecast) | live | Serves the audio stream + metadata JSON |
+| Playout (Liquidsoap) | live | Shuffles `music/`, crossfades, normalizes, pushes to Icecast |
+| Discord bot | planned | Issues [#1](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/1), [#2](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/2) |
+| Downloader | planned | Issue [#3](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/3) |
+| Smart queue | planned | Issue [#14](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/14) |
+| Voting / now-playing wiring | planned | Issue [#13](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/13) |
+| Taste map | planned | Issue [#12](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/12) |
 
 ## Data files
 
@@ -35,6 +47,15 @@ Both run via Docker Compose. Config is in `docker-compose.yml`, Liquidsoap scrip
 | `data/feedback.json` | Thumbs up/down tallies per track |
 | `data/recent_plays.json` | Last N track IDs, used by the smart queue to avoid repeats |
 
-## Infra
+Schema for `tracks.json` is defined in issue [#4](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/4).
 
-Sylvan is setting up the production environment on his cluster. Locally, `docker compose up` gets you a working stream.
+## Deployment
+
+**Local:** `docker compose up` runs Icecast + Liquidsoap. The frontend can be served with `python3 -m http.server` from `web/` or via the dev Traefik setup once that lands.
+
+**Prod:** the stack runs on Sylvan's cluster at `radio.vestibule.gripe`, joined to the external Docker network `proxy`. Traefik (already on the cluster) handles TLS via `websecure` and routes by Host/PathPrefix labels. The `authentik-auth@file` middleware is attached to every router - frontend, stream, metadata, and admin all require a Vestibule login. The radio is members-only by design.
+
+## Related projects
+
+[`server-library`](https://github.com/Vimothy-s-Vestibule/server-library) is a separate Vestibule project that catalogues members' books / music / movies into a SQLite-backed static site. There's been discussion of feeding radio plays into it (so a member's "music shelf" reflects what they've shared on the station), but no integration is built yet.
+
