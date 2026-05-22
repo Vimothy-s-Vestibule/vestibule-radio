@@ -20,6 +20,23 @@ docker compose up --build
 
 Stream at `http://localhost:8000/stream`. Status page at `http://localhost:8000`.
 
+## Discord bot
+
+The scraper bot reads song links from a Discord channel. To set it up:
+
+1. Create a bot at https://discord.com/developers/applications
+2. Under **Bot** settings, enable **Message Content Intent**
+3. Invite the bot to your server with `Send Messages` and `Read Message History` permissions
+4. Copy the bot token into `DISCORD_BOT_TOKEN` in your `.env`
+5. Right-click the target channel/thread and copy its ID into `DISCORD_CHANNEL_ID`
+
+Run the bot:
+
+```bash
+pip install -r scraper/requirements.txt
+python scraper/bot.py
+```
+
 ## What's built
 
 - Liquidsoap shuffles and crossfades tracks from the music directory
