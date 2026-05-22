@@ -1,0 +1,12 @@
+[project]
+name = "scraper"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "discord-py>=2.7.1",
+    "mutagen>=1.47.0",
+    "python-dotenv>=1.2.2",
+    "yt-dlp>=2026.3.17",
+]
