@@ -38,22 +38,22 @@ class YoutubeDownloader(Downloader):
         if "requested_downloads" in info and len(info["requested_downloads"]) > 0:
             filepath = info["requested_downloads"][0]["filepath"]
 
-        title = info.get("title") or "Unknown"
+        title = info.get("title") or ""
         parsed_title = parse_title(title)
         artist = (
             info.get("artist")
             or info.get("creator")
             or info.get("uploader")
             or parsed_title.get("artist")
-            or "Unknown"
+            or ""
         )
 
         out = TrackMetadata(
             id=info,
             title=title,
             artist=artist,
-            album=info.get("album") or info.get("alt_title") or "Unknown",
-            genre=info.get("genre") or parsed_title.get("genre") or "Unknown",
+            album=info.get("album") or info.get("alt_title") or "",
+            genre=info.get("genre") or parsed_title.get("genre") or "",
             duration_seconds=info.get("duration"),
             fp=Path(sanitize_filename(filepath)),
         )
