@@ -2,7 +2,7 @@ from typing import Set
 from pathlib import Path
 import os
 import logging
-from downloader.dl_types import Downloader, TrackMetadata
+from downloader.dl_types import Downloader, TrackMetadata, DuplicateTrackException
 from downloader.utils import sanitize_filename
 from spotdl.types.options import SpotDLOptionalOptions
 from spotdl import Spotdl
@@ -37,6 +37,11 @@ class SpotifyDownloader(Downloader):
         results = self.dl.search([link])
         if len(results) == 0:
             raise Exception("No results have been found for " + link)
+
+        song_to_download = results[0]
+
+        if song_to_download.song_id in track_ids:
+            raise DuplicateTrackException
 
         meta, output = self.dl.download(results[0])
 

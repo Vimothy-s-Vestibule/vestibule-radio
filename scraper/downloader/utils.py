@@ -79,7 +79,6 @@ def identify_music_platform(url) -> MusicPlatform:
     parsed_url = urlparse(url)
     # Extract the domain and convert to lowercase for uniform checking
     domain = parsed_url.netloc.lower()
-    print(domain)
     
     # Strip 'www.' if it exists so the domain checks work consistently
     if domain.startswith("www."):

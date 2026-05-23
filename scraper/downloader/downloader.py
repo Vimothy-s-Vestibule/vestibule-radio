@@ -42,7 +42,8 @@ class SongDownloader:
             return set()
         
         with open(tracks_json_fp, "r") as f:
-            f_data = TracksFileDataType(**json.load(f))
+            raw = json.load(f)
+            f_data = TracksFileDataType(**raw)
             return set(f_data.tracks)
         
 
@@ -79,7 +80,9 @@ class SongDownloader:
             with open(tracks_json_fp, "r+") as f:
                 f_data = TracksFileDataType(**json.load(f))
                 f_data.tracks[data.id] = data
+                f.seek(0)
                 json.dump(f_data.model_dump(mode="json"), f)
+                f.truncate()
                 self.track_ids.add(data.id)
 
     def batch_download(self, items: List[DownloadTask]):
