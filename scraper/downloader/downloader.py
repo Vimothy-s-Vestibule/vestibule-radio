@@ -116,6 +116,7 @@ class SongDownloader:
 
 if __name__ == "__main__":
     import sys
+    sys.path.insert(0, str(Path(__file__).parent.parent))
 
     if len(sys.argv) < 4:
         print(f"Usage: {sys.argv[0]} <poster_username> <message_date> <link1> [link2 ...]")
