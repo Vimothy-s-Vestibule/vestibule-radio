@@ -54,6 +54,23 @@ def sanitize_filename(name: str, replacement: str = "_") -> str:
     return os.path.join(head, clean) if head else clean
 
 
+def extract_id(url: str) -> str:
+    """Extract the platform-specific resource ID from a URL."""
+    parsed = urlparse(url)
+    domain = parsed.netloc.lower().removeprefix("www.")
+
+    if "youtube.com" in domain or "youtu.be" in domain:
+        if parsed.path == "/watch" or "music.youtube.com" in domain:
+            return parsed.query.split("&")[0].split("=")[1]  # v=ID
+        return parsed.path.strip("/").split("/")[0]  # youtu.be/ID
+
+    if "spotify.com" in domain:
+        parts = parsed.path.strip("/").split("/")
+        return parts[1]  # /track/ID, /album/ID, /playlist/ID
+
+    raise ValueError(f"Cannot extract id from {url}")
+
+
 def identify_music_platform(url) -> MusicPlatform:
     """
     Determines if a URL belongs to YouTube (including YT Music) or Spotify.

@@ -42,6 +42,7 @@ class SpotifyDownloader(Downloader):
             raise Exception("No output file returned")
 
         return TrackMetadata(
+            id=meta.song_id,
             title=meta.name,
             album=meta.album_name,
             artist=meta.artist,

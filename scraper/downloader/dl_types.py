@@ -13,6 +13,7 @@ class TrackMetadata(BaseModel):
     """
         The type of object that downloaders return
     """
+    id: str
     title: str
     artist: str
     album: str

@@ -49,6 +49,7 @@ class YoutubeDownloader(Downloader):
         )
 
         out = TrackMetadata(
+            id=info,
             title=title,
             artist=artist,
             album=info.get("album") or info.get("alt_title") or "Unknown",
