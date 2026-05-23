@@ -118,8 +118,11 @@ if __name__ == "__main__":
     import sys
 
     if len(sys.argv) < 4:
-        print(f"Usage: {sys.argv[0]} <link> <poster_username> <message_date>")
+        print(f"Usage: {sys.argv[0]} <poster_username> <message_date> <link1> [link2 ...]")
         sys.exit(1)
+
+    tasks = [DownloadTask(link=link, msg_author=sys.argv[1], msg_date=sys.argv[2])
+             for link in sys.argv[3:]]
+
     sd = SongDownloader()
-    task = DownloadTask(link=sys.argv[1], msg_author=sys.argv[2], msg_date=sys.argv[3])
-    sd.download(task)
+    sd.batch_download(tasks)
