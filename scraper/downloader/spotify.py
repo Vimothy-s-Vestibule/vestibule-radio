@@ -1,3 +1,4 @@
+from typing import Set
 from pathlib import Path
 import os
 import logging
@@ -32,7 +33,7 @@ class SpotifyDownloader(Downloader):
         logging.info("Spotdl initialized")
         pass
 
-    def download(self, link: str) -> TrackMetadata:
+    def download(self, link: str, track_ids: Set[str]) -> TrackMetadata:
         results = self.dl.search([link])
         if len(results) == 0:
             raise Exception("No results have been found for " + link)

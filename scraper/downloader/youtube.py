@@ -1,6 +1,8 @@
+import json
+from typing import Set
 from pathlib import Path
 import os
-from downloader.dl_types import Downloader, TrackMetadata
+from downloader.dl_types import Downloader, TrackMetadata, DuplicateTrackException
 from yt_dlp import YoutubeDL
 from downloader.utils import parse_title, sanitize_filename
 
@@ -31,12 +33,21 @@ class YoutubeDownloader(Downloader):
         self.dl = YoutubeDL(params=yt_dl_params)
         pass
 
-    def download(self, link: str) -> TrackMetadata:
-        info = self.dl.extract_info(link, download=True)
+    def download(self, link: str, track_ids: Set[str]) -> TrackMetadata:
+        info = self.dl.extract_info(link, download=False)
+        id = info.get("id")
 
-        filepath = info.get("filepath")
-        if "requested_downloads" in info and len(info["requested_downloads"]) > 0:
-            filepath = info["requested_downloads"][0]["filepath"]
+        if not id:
+            raise Exception("Track doesn't contain ID")
+
+        if id in track_ids:
+            raise DuplicateTrackException
+
+        code = self.dl.download(link)
+        if code != 0:
+            raise Exception("Non 0 download return code")
+
+        filepath = os.path.join(dl_folder, f"{info["title"]}.mp3")
 
         title = info.get("title") or ""
         parsed_title = parse_title(title)
@@ -54,7 +65,7 @@ class YoutubeDownloader(Downloader):
             fp_orig.rename(fp_clean)
 
         out = TrackMetadata(
-            id=info,
+            id=info.get("id"),
             title=title,
             artist=artist,
             album=info.get("album") or info.get("alt_title") or "",

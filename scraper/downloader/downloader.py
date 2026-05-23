@@ -9,7 +9,7 @@ from downloader.youtube import YoutubeDownloader
 from downloader.dl_types import Downloader, TrackData, TracksFileDataType, MusicPlatform
 from downloader.utils import identify_music_platform
 from concurrent.futures import ThreadPoolExecutor
-from typing import Dict, List
+from typing import Dict, List, Set
 
 
 tracks_json_fp = Path(os.path.abspath("./tracks.json"))
@@ -24,13 +24,27 @@ class DownloadTask(BaseModel):
 class SongDownloader:
     pool: ThreadPoolExecutor
     downloaders: Dict[MusicPlatform, Downloader]
+    track_ids: Set[str]
 
     def __init__(self):
         self.pool = ThreadPoolExecutor()
         self.downloaders = {}
         self._save_lock = threading.Lock()
         self._downloaders_lock = threading.Lock()
+        self.track_ids = self._get_set_tracks_id()
         pass
+
+    @staticmethod
+    def _get_set_tracks_id() -> Set[str]:
+        tracks_json_fp.touch()
+
+        if tracks_json_fp.stat().st_size == 0:
+            return set()
+        
+        with open(tracks_json_fp, "r") as f:
+            f_data = TracksFileDataType(**json.load(f))
+            return set(f_data.tracks)
+        
 
     def get_downloader(self, type: MusicPlatform) -> Downloader:
         """
@@ -57,14 +71,16 @@ class SongDownloader:
             if tracks_json_fp.stat().st_size == 0:
                 with open(tracks_json_fp, "w") as f:
                     json.dump(
-                        TracksFileDataType(tracks=[data]).model_dump(mode="json"), f
+                        TracksFileDataType(tracks={data.id: data}).model_dump(mode="json"), f
                     )
+                    self.track_ids.add(data.id)
                 return
 
             with open(tracks_json_fp, "r+") as f:
                 f_data = TracksFileDataType(**json.load(f))
-                f_data.tracks.append(data)
+                f_data.tracks[data.id] = data
                 json.dump(f_data.model_dump(mode="json"), f)
+                self.track_ids.add(data.id)
 
     def batch_download(self, items: List[DownloadTask]):
         # NOTE: Both yt-dl and spotdl provide batch downloading features, it might be worth it to use them instead of this one
@@ -81,7 +97,7 @@ class SongDownloader:
 
         dl = self.get_downloader(platform)
 
-        data = dl.download(task.link)
+        data = dl.download(task.link, self.track_ids)
 
         final_data = TrackData(
             **data.model_dump(),

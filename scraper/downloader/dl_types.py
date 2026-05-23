@@ -1,4 +1,4 @@
-from typing import List
+from typing import Dict, Set
 from enum import Enum
 import pathlib
 from abc import ABC, abstractmethod
@@ -32,10 +32,16 @@ class TrackData(TrackMetadata):
     source: str
 
 class TracksFileDataType(BaseModel):
-    tracks: List[TrackData]
+    tracks: Dict[str, TrackData]
 
 class Downloader(ABC):
     @abstractmethod
-    def download(self, link: str) -> TrackMetadata:
+    def download(self, link: str, track_ids: Set[str]) -> TrackMetadata:
+        """
+            Downloads the track and its metadata, accepts a track ids set to avoid duplicates
+        """
         pass
+
+class DuplicateTrackException(Exception):
+    pass
     
