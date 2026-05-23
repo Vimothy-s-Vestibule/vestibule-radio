@@ -1,7 +1,7 @@
 from pathlib import Path
 import os
 import logging
-from .dl_types import Downloader, MusicData
+from downloader.dl_types import Downloader, TrackMetadata
 from spotdl.types.options import SpotDLOptionalOptions
 from spotdl import Spotdl
 
@@ -25,13 +25,13 @@ opts = SpotDLOptionalOptions(
 
 class SpotifyDownloader(Downloader):
     dl: Spotdl
-
+        
     def __init__(self):
         self.dl = Spotdl(client_id="", client_secret="", downloader_settings=opts)
         logging.info("Spotdl initialized")
         pass
 
-    def download(self, link: str) -> MusicData:
+    def download(self, link: str) -> TrackMetadata:
         results = self.dl.search([link])
         if len(results) == 0:
             raise Exception("No results have been found for " + link)
@@ -41,7 +41,7 @@ class SpotifyDownloader(Downloader):
         if not output:
             raise Exception("No output file returned")
 
-        return MusicData(
+        return TrackMetadata(
             title=meta.name,
             album=meta.album_name,
             artist=meta.artist,

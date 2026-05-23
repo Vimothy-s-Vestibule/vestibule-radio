@@ -1,5 +1,7 @@
 import os
 import re
+from urllib.parse import urlparse
+from .dl_types import MusicPlatform
 
 def parse_title(title: str) -> dict:
     """Extract artist, title, and genre from a YouTube-style title string.
@@ -50,4 +52,27 @@ def sanitize_filename(name: str, replacement: str = "_") -> str:
     head, tail = os.path.split(name)
     clean = re.sub(r'[<>:"/\\|?*,\']', replacement, tail).strip()
     return os.path.join(head, clean) if head else clean
+
+
+def identify_music_platform(url) -> MusicPlatform:
+    """
+    Determines if a URL belongs to YouTube (including YT Music) or Spotify.
+    """
+ 
+    parsed_url = urlparse(url)
+    # Extract the domain and convert to lowercase for uniform checking
+    domain = parsed_url.netloc.lower()
+    print(domain)
+    
+    # Strip 'www.' if it exists so the domain checks work consistently
+    if domain.startswith("www."):
+        domain = domain[4:]
+        
+    if domain in ["youtube.com", "youtu.be", "://youtube.com", "music.youtube.com"]:
+        return MusicPlatform.YouTube
+    elif domain == "spotify.com" or "spotify.com" in domain:
+        return MusicPlatform.Spotify
+    else:
+        raise Exception("Non-supported platform")
+        
 

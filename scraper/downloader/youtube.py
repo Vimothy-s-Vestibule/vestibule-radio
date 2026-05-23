@@ -1,9 +1,9 @@
 import mutagen
 from pathlib import Path
 import os
-from .dl_types import Downloader, MusicData
+from downloader.dl_types import Downloader, TrackMetadata
 from yt_dlp import YoutubeDL
-from .utils import parse_title, sanitize_filename
+from downloader.utils import parse_title, sanitize_filename 
 
 dl_folder = os.path.abspath("./music")
 yt_dl_params = {
@@ -32,7 +32,7 @@ class YoutubeDownloader(Downloader):
         self.dl = YoutubeDL(params=yt_dl_params)
         pass
 
-    def download(self, link: str) -> MusicData:
+    def download(self, link: str) -> TrackMetadata:
         info = self.dl.extract_info(link, download=True)
 
         filepath = info.get("filepath")
@@ -41,25 +41,26 @@ class YoutubeDownloader(Downloader):
 
         m_info = mutagen.File(filepath)
 
-        title = m_info.get("title") or info.get("title", "Unknown")
+        title = m_info.get("title") or info.get("title") or "Unknown"
         parsed_title = parse_title(title)
         artist = (
             m_info.get("artist")
             or info.get("artist")
             or info.get("creator")
             or info.get("uploader")
-            or parsed_title.get("artist", "Unknown")
+            or parsed_title.get("artist") or "Unknown"
         )
 
-        out = MusicData(
+        out = TrackMetadata(
             title=title,
             artist=artist,
             album=m_info.get("album")
             or info.get("album")
-            or info.get("alt_title", "Unknown"),
+            or info.get("alt_title") or "Unknown",
             genre=m_info.get("genre")
             or info.get("genre")
-            or parsed_title.get("genre", "Unknown"),
+            or parsed_title.get("genre")
+            or "Unknown",
             duration_seconds=info.get("duration"),
             fp=Path(sanitize_filename(filepath)),
         )

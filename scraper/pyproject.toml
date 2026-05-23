@@ -7,7 +7,9 @@ requires-python = ">=3.13"
 dependencies = [
     "discord-py>=2.7.1",
     "mutagen>=1.47.0",
+    "pydantic>=2.13.4",
     "python-dotenv>=1.2.2",
     "spotdl>=4.5.0",
     "yt-dlp>=2026.3.17",
+    "pydantic>=2.0",
 ]
