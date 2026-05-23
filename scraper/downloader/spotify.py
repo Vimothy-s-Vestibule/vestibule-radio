@@ -10,10 +10,10 @@ opts = SpotDLOptionalOptions(
     {
         "bitrate": "192",
         "format": "mp3",
-        # "force_update_metadata": True,
+
         "output": "./music",
         "headless": True,
-        "threads": 4,  # TODO: Read from env
+        "threads": 4,  # NOTE: Maybe read from env?
         "overwrite": "skip",
         "simple_tui": False,
         "no_cache": False,
@@ -52,8 +52,3 @@ class SpotifyDownloader(Downloader):
         )
 
 
-if __name__ == "__main__":
-    dl = SpotifyDownloader()
-    dl.download(
-        "https://open.spotify.com/album/5bUtogkovAGfPbgPZ3O1RJ?si=RyBr7wVsS6KKRCxNuiCvPw"
-    )

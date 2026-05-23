@@ -9,16 +9,17 @@ from downloader.youtube import YoutubeDownloader
 from downloader.dl_types import Downloader, TrackData, TracksFileDataType, MusicPlatform
 from downloader.utils import identify_music_platform
 from concurrent.futures import ThreadPoolExecutor
-from typing import Dict, List, Tuple
+from typing import Dict, List
 
 
 tracks_json_fp = Path(os.path.abspath("./tracks.json"))
+
 
 class DownloadTask(BaseModel):
     link: str
     msg_author: str
     msg_date: str
-    
+
 
 class SongDownloader:
     pool: ThreadPoolExecutor
@@ -36,7 +37,6 @@ class SongDownloader:
         Lazy loads the downloader depending on the type, this literally exists just because spotdl takes forever to startup
         """
         with self._downloaders_lock:
-            
             if type in self.downloaders:
                 return self.downloaders[type]
 
@@ -56,7 +56,9 @@ class SongDownloader:
 
             if tracks_json_fp.stat().st_size == 0:
                 with open(tracks_json_fp, "w") as f:
-                    json.dump(TracksFileDataType(tracks=[data]).model_dump(mode="json"), f)
+                    json.dump(
+                        TracksFileDataType(tracks=[data]).model_dump(mode="json"), f
+                    )
                 return
 
             with open(tracks_json_fp, "r+") as f:
@@ -65,10 +67,8 @@ class SongDownloader:
                 json.dump(f_data.model_dump(mode="json"), f)
 
     def batch_download(self, items: List[DownloadTask]):
-        futures = [
-            self.pool.submit(self.download, task)
-            for task in items
-        ]
+        # NOTE: Both yt-dl and spotdl provide batch downloading features, it might be worth it to use them instead of this one
+        futures = [self.pool.submit(self.download, task) for task in items]
         for f in futures:
             f.result()
 
@@ -102,4 +102,5 @@ if __name__ == "__main__":
         print(f"Usage: {sys.argv[0]} <link> <poster_username> <message_date>")
         sys.exit(1)
     sd = SongDownloader()
-    sd.download(sys.argv[1], sys.argv[2], sys.argv[3])
+    task = DownloadTask(link=sys.argv[1], msg_author=sys.argv[2], msg_date=sys.argv[3])
+    sd.download(task)
