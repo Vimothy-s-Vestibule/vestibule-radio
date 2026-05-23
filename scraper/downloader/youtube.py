@@ -48,6 +48,11 @@ class YoutubeDownloader(Downloader):
             or ""
         )
 
+        fp_orig = Path(filepath)
+        fp_clean = Path(sanitize_filename(filepath))
+        if fp_orig != fp_clean:
+            fp_orig.rename(fp_clean)
+
         out = TrackMetadata(
             id=info,
             title=title,
@@ -55,7 +60,7 @@ class YoutubeDownloader(Downloader):
             album=info.get("album") or info.get("alt_title") or "",
             genre=info.get("genre") or parsed_title.get("genre") or "",
             duration_seconds=info.get("duration"),
-            fp=Path(sanitize_filename(filepath)),
+            fp=fp_clean,
         )
 
         return out

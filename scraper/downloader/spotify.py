@@ -2,6 +2,7 @@ from pathlib import Path
 import os
 import logging
 from downloader.dl_types import Downloader, TrackMetadata
+from downloader.utils import sanitize_filename
 from spotdl.types.options import SpotDLOptionalOptions
 from spotdl import Spotdl
 
@@ -41,6 +42,11 @@ class SpotifyDownloader(Downloader):
         if not output:
             raise Exception("No output file returned")
 
+        fp_orig = Path(os.path.abspath(output))
+        fp_clean = Path(sanitize_filename(str(fp_orig)))
+        if fp_orig != fp_clean:
+            fp_orig.rename(fp_clean)
+
         return TrackMetadata(
             id=meta.song_id,
             title=meta.name,
@@ -48,7 +54,7 @@ class SpotifyDownloader(Downloader):
             artist=meta.artist,
             duration_seconds=meta.duration,
             genre=" ".join(meta.genres if any(meta.genres) else "").strip(),
-            fp=Path(os.path.abspath(output)),
+            fp=fp_clean,
         )
 
 
