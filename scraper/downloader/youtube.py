@@ -43,11 +43,14 @@ class YoutubeDownloader(Downloader):
         if id in track_ids:
             raise DuplicateTrackException
 
-        code = self.dl.download(link)
-        if code != 0:
-            raise Exception("Non 0 download return code")
+        info = self.dl.extract_info(link, download=True)
 
-        filepath = os.path.join(dl_folder, f"{info["title"]}.mp3")
+        filepath = info.get("filepath")
+        if "requested_downloads" in info and len(info["requested_downloads"]) > 0:
+            filepath = info["requested_downloads"][0]["filepath"]
+
+        if not filepath:
+            raise Exception("No filepath after download")
 
         title = info.get("title") or ""
         parsed_title = parse_title(title)
