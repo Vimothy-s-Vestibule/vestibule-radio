@@ -5,6 +5,7 @@ import sys
 
 import discord
 from dotenv import load_dotenv
+from link_parser import parse_message
 
 
 def main() -> None:
@@ -38,9 +39,18 @@ def main() -> None:
             return
 
         print(f"Fetching messages from {channel.name} (ID: {channel.id})...")
+        links = []
         try:
             async for message in channel.history(limit=100):
                 print(f"[{message.author}] {message.content}")
+                parsed_links = parse_message(
+                    message_content=message.content,
+                    posted_by=message.author,
+                    posted_at=message.created_at,
+                )
+                for link in parsed_links:
+                    links.append(link)
+            print(links)
         except discord.Forbidden:
             print(
                 "ERROR: missing permission to read message history",
