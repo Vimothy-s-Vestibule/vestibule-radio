@@ -1,28 +1,35 @@
 # Vestibule Community Radio
 
-A 24/7 radio station for the Vestibule community. Post a YouTube or Spotify link in the music thread and it ends up on the station.
+A 24/7 listening room for the Vestibule community. Post a YouTube or Spotify link in the music thread and it gets added to the station. Everyone tuned in hears the same song at the same time, right in the browser.
 
-The stream is running. Sylvan is getting it set up on the server -- link coming soon.
+The radio plays songs through YouTube's embedded player, so the audio comes straight from YouTube. We don't host or stream any audio ourselves.
 
 ## Get your music on the radio
 
-Post a YouTube or Spotify link in the music thread. That's it. The system downloads it and adds it to the rotation. The web player will show who posted each song.
+Post a YouTube or Spotify link in the music thread. That's it. The bot picks it up, finds the matching YouTube video, and adds it to the rotation. Spotify links get matched to a YouTube version automatically, since that's what the player can embed. The web player shows who posted each song.
+
+## How it works
+
+- The Discord bot watches the music thread and pulls out every YouTube and Spotify link.
+- Spotify links are resolved to a matching YouTube video, because only YouTube can be embedded.
+- Each track is stored as a YouTube video ID plus metadata (title, artist, genre, who posted it). No audio files.
+- The web app plays the queue through the YouTube IFrame player, kept in sync across listeners by the server.
 
 ## Run it locally
 
+The web app and the bot run locally. Playback is just YouTube embeds in your browser, so there's no streaming server or media to host, and no VM required.
+
 ```bash
-git clone https://github.com/jack123xyz/vestibule-radio.git
+git clone https://github.com/Vimothy-s-Vestibule/vestibule-radio
 cd vestibule-radio
-cp .env.example .env        # edit passwords
-                             # drop some mp3s in music/
-docker compose up --build
+cp .env.example .env        # edit values
 ```
 
-Stream at `http://localhost:8000/stream`. Status page at `http://localhost:8000`.
+The project is mid-pivot, so the pieces are still coming together. The Discord bot and link parser run today. The API, sync server, and web player are in active development, tracked in the [issues](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues).
 
 ## Discord bot
 
-The scraper bot reads song links from a Discord channel. To set it up:
+The bot reads song links from a Discord channel. To set it up:
 
 1. Create a bot at https://discord.com/developers/applications
 2. Under **Bot** settings, enable **Message Content Intent**
@@ -37,20 +44,22 @@ pip install -r scraper/requirements.txt
 python scraper/bot.py
 ```
 
+It runs in two modes: `--listen` (default) processes new posts as they arrive, and `--backfill` reads the channel history once and then exits.
+
 ## What's built
 
-- Liquidsoap shuffles and crossfades tracks from the music directory
-- Icecast serves the stream over HTTP
-- Docker Compose runs the whole thing
+- **Discord bot** connects to the music thread, with listen and backfill modes and graceful shutdown
+- **Link parser** extracts and normalizes YouTube and Spotify links from messages, and dedupes them
 
 ## What we're building next
 
-- **Discord bot** that automatically grabs links from the music thread and downloads them ([issues](https://github.com/jack123xyz/vestibule-radio/issues?q=label%3Abot))
-- **Web player** so people can listen in a browser ([issues](https://github.com/jack123xyz/vestibule-radio/issues?q=label%3Afrontend))
-- **Smart queue** that avoids repeats and lets listeners upvote/downvote songs
+- **Spotify to YouTube resolver** so Spotify links can be embedded ([#27](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/27))
+- **Web player** using the YouTube IFrame API ([#30](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/30))
+- **WebSocket sync server** so everyone hears the same song at the same time ([#31](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/31))
+- **Chat and live voting** for the next track ([#33](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/33), [#34](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/34))
 
 ## Help out
 
-Check the [issues](https://github.com/jack123xyz/vestibule-radio/issues). Pick something, open a PR. If you don't code, post music, record audio clips for between songs, or share design ideas in the Discord.
+Check the [issues](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues). Pick something, open a PR. If you don't code, post music or share design ideas in the Discord.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for setup details.
