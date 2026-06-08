@@ -9,9 +9,9 @@ __pycache__/
 .env.local
 .env.production
 
-# Music and audio (don't commit MP3s to git)
-music/*.mp3
-clips/*.mp3
+# Obsolete local dirs (audio hosting removed, may still linger locally)
+music/
+clips/
 
 # Data files (generated at runtime)
 data/seen_links.json
