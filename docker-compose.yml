@@ -1,0 +1,14 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    ports:
+      - "8002:8002"
+    environment:
+      - TRACKS_PATH=/app/data/tracks.json
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:8001}
+    volumes:
+      # read the track store the bot/parser writes; read-only, the API never writes
+      - ./data:/app/data:ro
+    restart: unless-stopped
