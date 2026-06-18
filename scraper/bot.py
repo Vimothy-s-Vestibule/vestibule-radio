@@ -16,7 +16,7 @@ import discord
 from dotenv import load_dotenv
 
 from link_parser import parse_message
-from downloader.downloader import SongDownloader, DownloadTask
+from downloader.extractor import SongExtractor, ExtractTask
 
 
 logger = logging.getLogger("vestibule.scraper")
@@ -46,9 +46,9 @@ def resolve_mode(args: argparse.Namespace) -> str:
     return mode
 
 
-def links_to_tasks(links: list[dict]) -> list[DownloadTask]:
+def links_to_tasks(links: list[dict]) -> list[ExtractTask]:
     return [
-        DownloadTask(
+        ExtractTask(
             link=link["url"],
             msg_author=link["posted_by"],
             msg_date=link["posted_at"],
@@ -57,16 +57,16 @@ def links_to_tasks(links: list[dict]) -> list[DownloadTask]:
     ]
 
 
-async def download_task(downloader: SongDownloader, task: DownloadTask) -> None:
-    future = downloader.pool.submit(downloader.download, task)
+async def extract_task(extractor: SongExtractor, task: ExtractTask) -> None:
+    future = extractor.pool.submit(extractor.extract, task)
     try:
         await asyncio.wrap_future(future)
-        logger.info("Downloaded %s", task.link)
+        logger.info("Extracted %s", task.link)
     except Exception:
-        logger.exception("Failed to download %s", task.link)
+        logger.exception("Failed to extract %s", task.link)
 
 
-async def process_message(downloader: SongDownloader, message: discord.Message) -> None:
+async def process_message(extractor: SongExtractor, message: discord.Message) -> None:
     try:
         links = parse_message(
             message_content=message.content,
@@ -83,7 +83,7 @@ async def process_message(downloader: SongDownloader, message: discord.Message) 
     tasks = links_to_tasks(links)
     logger.info("Found %d new link(s) in message %s", len(tasks), message.id)
     for task in tasks:
-        await download_task(downloader, task)
+        await extract_task(extractor, task)
 
 
 async def resolve_channel(client: discord.Client, channel_id: int):
@@ -98,7 +98,7 @@ async def resolve_channel(client: discord.Client, channel_id: int):
 
 
 async def run_backfill(
-    client: discord.Client, downloader: SongDownloader, channel_id: int
+    client: discord.Client, extractor: SongExtractor, channel_id: int
 ) -> None:
     channel = await resolve_channel(client, channel_id)
     if channel is None:
@@ -107,14 +107,14 @@ async def run_backfill(
     logger.info("Backfilling from %s (ID: %s)", channel.name, channel.id)
     try:
         async for message in channel.history(limit=HISTORY_LIMIT):
-            await process_message(downloader, message)
+            await process_message(extractor, message)
     except discord.Forbidden:
         logger.error("Missing permission to read message history")
     logger.info("Backfill complete")
 
 
 async def runner(
-    client: discord.Client, token: str, downloader: SongDownloader
+    client: discord.Client, token: str, extractor: SongExtractor
 ) -> None:
     loop = asyncio.get_running_loop()
     closing = False
@@ -137,7 +137,7 @@ async def runner(
         async with client:
             await client.start(token)
     finally:
-        await asyncio.to_thread(downloader.pool.shutdown, wait=True)
+        await asyncio.to_thread(extractor.pool.shutdown, wait=True)
         logger.info("Shutdown complete")
 
 
@@ -169,13 +169,13 @@ def main() -> None:
     intents.message_content = True
     client = discord.Client(intents=intents)
 
-    downloader = SongDownloader()
+    extractor = SongExtractor()
 
     @client.event
     async def on_ready() -> None:
         logger.info("Logged in as %s (ID: %s)", client.user, client.user.id)
         if mode == "backfill":
-            await run_backfill(client, downloader, channel_id)
+            await run_backfill(client, extractor, channel_id)
             await client.close()
         else:
             logger.info("Listening for new messages in channel %s", channel_id)
@@ -186,10 +186,10 @@ def main() -> None:
             return
         if message.channel.id != channel_id:
             return
-        await process_message(downloader, message)
+        await process_message(extractor, message)
 
     try:
-        asyncio.run(runner(client, token, downloader))
+        asyncio.run(runner(client, token, extractor))
     except KeyboardInterrupt:
         pass
 
