@@ -6,7 +6,9 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "discord-py>=2.7.1",
+    "musicbrainzngs>=0.7.1",
     "pydantic>=2.13.4",
     "python-dotenv>=1.2.2",
+    "requests>=2.34.2",
     "yt-dlp>=2026.3.17",
 ]
