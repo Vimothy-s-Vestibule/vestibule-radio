@@ -22,7 +22,21 @@ The Discord bot runs today:
 
 ```bash
 pip install -r scraper/requirements.txt
-python scraper/bot.py
+python scraper/bot.py            # --listen (default) processes new posts
+python scraper/bot.py --backfill # read history once, then exit
+```
+
+The API serves the track queue to the frontend:
+
+```bash
+docker compose up        # API on http://localhost:8002
+```
+
+The web app uses Vite for local development:
+
+```bash
+npm install
+npm run dev              # web app on http://localhost:8001
 ```
 
 If you're only working on the frontend, you don't need Discord credentials in `.env`. Leave `DISCORD_BOT_TOKEN` and `DISCORD_CHANNEL_ID` blank. Playback in the web app is YouTube embeds, so you can develop it with nothing but a browser.
@@ -33,8 +47,8 @@ Browse the [issues](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issue
 
 The work is organized in rough phases, so you can see where a task fits:
 
-1. **Ingestion pivot** - resolve links to video IDs and store metadata ([#26](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/26), [#27](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/27), [#28](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/28), [#21](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/21))
-2. **Minimal playback** - API server and a YouTube IFrame player ([#29](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/29), [#30](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/30), [#37](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/37))
+1. **Ingestion pivot** (mostly done) - resolve links to video IDs and store enriched metadata. The bot, parser, MusicBrainz/LastFM enrichment, and track store are in; the Spotify to YouTube resolver is still a placeholder ([#27](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/27), [#28](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/28))
+2. **Minimal playback** (mostly done) - the API server and a YouTube IFrame player are in; end-to-end testing is open ([#37](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/37))
 3. **Sync and chat** - shared playback, voting, chat, login ([#31](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/31), [#33](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/33), [#34](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/34), [#35](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/35))
 4. **Polish and mobile** - PWA, smart queue, desync handling ([#36](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/36), [#38](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/38), [#32](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/32))
 
@@ -53,8 +67,9 @@ PRs are reviewed by a maintainer before they're merged, so expect some back and 
 
 | Path | What it is |
 |------|------------|
-| `web/` | Static frontend (HTML/CSS/JS, no build step), YouTube IFrame player |
-| `scraper/` | Discord bot, link parser, and Spotify to YouTube resolver |
+| `web/` | Static frontend (HTML/CSS/JS), served by Vite in dev, YouTube IFrame player |
+| `scraper/` | Discord bot, link parser, metadata enrichment, and the Spotify to YouTube resolver |
+| `api/` | FastAPI service that serves the track queue to the frontend |
 | `data/` | JSON state files (tracks, votes, recent plays) |
 | `docs/` | Architecture and design notes |
 
@@ -64,7 +79,7 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for how the pieces fit together
 
 You don't always need everything running:
 
-- **Frontend only:** `cd web && python3 -m http.server 8001`. The player embeds run against YouTube directly.
+- **Frontend only:** `npm install && npm run dev` serves the web app on `http://localhost:8001`. The player embeds run against YouTube directly; point it at a running API for real queue data, or develop against the static page on its own.
 - **Resolver, parser, or other Python scripts:** runnable standalone with fixture data, no Docker needed.
 - **Discord bot:** needs a bot token in `.env`, but you can point it at a private test server instead of the real Vestibule one.
 
