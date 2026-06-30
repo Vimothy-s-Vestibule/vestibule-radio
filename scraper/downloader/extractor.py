@@ -12,7 +12,12 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, List, Set
 
 
-tracks_json_fp = Path(os.path.abspath("./tracks.json"))
+# Write to the same store the API reads. TRACKS_PATH keeps the two aligned in
+# Docker (the api container reads /app/data/tracks.json); the default resolves to
+# data/tracks.json at the repo root so it works no matter where the bot is run from.
+_default_tracks_path = Path(__file__).resolve().parents[2] / "data" / "tracks.json"
+tracks_json_fp = Path(os.getenv("TRACKS_PATH", _default_tracks_path))
+tracks_json_fp.parent.mkdir(parents=True, exist_ok=True)
 
 
 class ExtractTask(BaseModel):
