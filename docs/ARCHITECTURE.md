@@ -2,7 +2,7 @@
 
 How Vestibule Community Radio works.
 
-The station plays songs through YouTube's embedded player. Listeners watch the same queue in sync, and YouTube serves the actual audio and video. We don't host or stream any audio ourselves, which keeps licensing and delivery with YouTube.
+The station plays songs through YouTube's embedded player, and YouTube serves the actual audio and video. We don't host or stream any audio ourselves, which keeps licensing and delivery with YouTube. The goal is for every listener to watch the same queue in sync; the sync server that coordinates that is still to come ([#31](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/31)).
 
 ## Flow
 
@@ -25,7 +25,7 @@ Discord Thread --> Bot --> Parser --> Resolver (Spotify to YouTube if needed)
                     YouTube serves the audio/video
 ```
 
-A posted link becomes a YouTube video ID plus metadata. The server decides what's playing and how far into it, and every client lines its embed up to that.
+A posted link becomes a YouTube video ID plus metadata. Once the sync server lands, it will decide what's playing and how far into it, and every client will line its embed up to that. Until then the web player just plays the queue locally.
 
 ## Components
 
@@ -33,18 +33,18 @@ A posted link becomes a YouTube video ID plus metadata. The server decides what'
 |-----------|--------|-------|
 | Discord bot | built | Watches the music thread, listen + backfill modes, graceful shutdown |
 | Link parser | built | Extracts and normalizes YouTube and Spotify URLs, dedupes |
-| Spotify to YouTube resolver | planned | Matches a Spotify link to a YouTube video ID, ISRC first, falling back to "Artist - Song" plus duration. [#27](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/27) |
-| MusicBrainz enrichment | planned | Fills in genre and cleans metadata for the UI. [#21](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/21) |
-| Track store | planned | Video IDs + metadata. JSON to start, SQLite when it hurts. Schema in [#28](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/28) |
-| API server | planned | Serves the queue and track list to the frontend. [#29](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/29) |
+| MusicBrainz + LastFM enrichment | built | Fills in genre, album, and cleans metadata for the UI. [#21](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/21) |
+| Track store | built | Video IDs + metadata. JSON to start, SQLite when it hurts. Schema update in [#28](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/28) |
+| API server | built | FastAPI, serves the queue and track list to the frontend |
+| Web player | built | YouTube IFrame Player API, plays the queue. Sync still to come. [#30](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/30) |
+| Spotify to YouTube resolver | planned | Placeholder today; will match a Spotify link to a YouTube video ID, ISRC first, falling back to "Artist - Song" plus duration. [#27](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/27) |
 | WebSocket sync server | planned | Server-authoritative now-playing state and progress, plus chat and voting transport. [#31](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/31) |
-| Web player | planned | YouTube IFrame Player API, plays the queue in sync. [#30](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/30) |
 | Per-channel chat | planned | Over the same WebSocket layer. [#33](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/33) |
 | Live voting | planned | Listeners vote on the next track. [#34](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/34) |
 | Discord OAuth | planned | Identities match the community. [#35](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/35) |
 | PWA | planned | Installable on mobile via manifest + service worker. [#36](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/36) |
 
-The old self-hosted audio stack (downloader, Liquidsoap, Icecast) is being removed as part of the pivot, tracked in [#25](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/25). Some of that code is still in the tree until that lands.
+The old self-hosted audio stack (Liquidsoap, Icecast, the downloader-to-disk path) has been removed as part of the pivot ([#25](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/25)). There are no streaming containers left in `docker-compose.yml`.
 
 ## How sync works
 

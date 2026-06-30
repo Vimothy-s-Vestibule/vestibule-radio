@@ -1,6 +1,6 @@
 # Vestibule Community Radio
 
-A 24/7 listening room for the Vestibule community. Post a YouTube or Spotify link in the music thread and it gets added to the station. Everyone tuned in hears the same song at the same time, right in the browser.
+A 24/7 listening room for the Vestibule community. Post a YouTube or Spotify link in the music thread and it gets added to the station, right in the browser. The goal is for everyone tuned in to hear the same song at the same time; the sync that coordinates that is still being built.
 
 The radio plays songs through YouTube's embedded player, so the audio comes straight from YouTube. We don't host or stream any audio ourselves.
 
@@ -12,8 +12,9 @@ Post a YouTube or Spotify link in the music thread. That's it. The bot picks it 
 
 - The Discord bot watches the music thread and pulls out every YouTube and Spotify link.
 - Spotify links are resolved to a matching YouTube video, because only YouTube can be embedded.
+- MusicBrainz and LastFM fill in genre, album, and clean up the metadata.
 - Each track is stored as a YouTube video ID plus metadata (title, artist, genre, who posted it). No audio files.
-- The web app plays the queue through the YouTube IFrame player, kept in sync across listeners by the server.
+- The web app plays the queue through the YouTube IFrame player. Keeping listeners in sync with each other is the next piece (the sync server).
 
 ## Run it locally
 
@@ -25,7 +26,7 @@ cd vestibule-radio
 cp .env.example .env        # edit values
 ```
 
-The project is mid-pivot, so the pieces are still coming together. The Discord bot and link parser run today. The API, sync server, and web player are in active development, tracked in the [issues](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues).
+The project is mid-pivot, so the pieces are still coming together. The bot, link parser, metadata enrichment, track store, API, and web player all run today. The sync server, chat, and voting are in active development, tracked in the [issues](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues).
 
 ## Discord bot
 
@@ -50,11 +51,13 @@ It runs in two modes: `--listen` (default) processes new posts as they arrive, a
 
 - **Discord bot** connects to the music thread, with listen and backfill modes and graceful shutdown
 - **Link parser** extracts and normalizes YouTube and Spotify links from messages, and dedupes them
+- **Metadata enrichment** pulls genre and album from MusicBrainz and LastFM
+- **Track store and API** keep the queue and serve it to the frontend over FastAPI
+- **Web player** plays the queue through the YouTube IFrame API
 
 ## What we're building next
 
-- **Spotify to YouTube resolver** so Spotify links can be embedded ([#27](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/27))
-- **Web player** using the YouTube IFrame API ([#30](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/30))
+- **Spotify to YouTube resolver** so Spotify links can be embedded; it's a placeholder today ([#27](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/27))
 - **WebSocket sync server** so everyone hears the same song at the same time ([#31](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/31))
 - **Chat and live voting** for the next track ([#33](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/33), [#34](https://github.com/Vimothy-s-Vestibule/vestibule-radio/issues/34))
 
