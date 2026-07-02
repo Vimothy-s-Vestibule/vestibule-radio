@@ -11,7 +11,12 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
-from connections_manager import ConnectionsManager, WSIncomingMessage
+from connections_manager import (
+    ClientChatMessage,
+    ClientVoteMessage,
+    ConnectionsManager,
+    WSIncomingMessage,
+)
 from models import CurrentlyPlaying, Track
 from player import Player
 from store import get_track, load_tracks
@@ -81,9 +86,9 @@ async def now_playing_ws(ws: WebSocket):
                 raw = await ws.receive_json()
                 result = WSIncomingMessage.model_validate(raw)
 
-                if result.payload.type == "message":
+                if isinstance(result.payload, ClientChatMessage):
                     await manager.send_message(result.payload)
-                elif result.payload.type == "vote":
+                elif isinstance(result.payload, ClientVoteMessage):
                     await player.vote(result.payload.trackID)
 
             except WebSocketDisconnect:

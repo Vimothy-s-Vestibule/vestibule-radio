@@ -10,3 +10,8 @@ dependencies = [
     "uvicorn==0.23.2",
     "websockets>=16.0",
 ]
+
+[dependency-groups]
+dev = [
+    "pyright>=1.1.411",
+]
