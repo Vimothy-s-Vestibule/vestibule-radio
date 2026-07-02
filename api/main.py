@@ -30,6 +30,7 @@ player = Player()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     player.on_advance(manager.send_now_playing)
+    player.on_votes_change(manager.send_votes)
     await player.start()
     yield
     await player.stop()
@@ -70,8 +71,9 @@ async def now_playing_ws(ws: WebSocket):
     await ws.accept()
     id = await manager.add_client(ws)
 
-    # On connect, send the currently playing song.
+    # On connect, send the currently playing song and current vote totals.
     await manager.send_now_playing(player.get_current_track())
+    await manager.send_votes(player.get_votes())
 
     try:
         while True:
@@ -81,6 +83,8 @@ async def now_playing_ws(ws: WebSocket):
 
                 if result.payload.type == "message":
                     await manager.send_message(result.payload)
+                elif result.payload.type == "vote":
+                    await player.vote(result.payload.trackID)
 
             except WebSocketDisconnect:
                 break

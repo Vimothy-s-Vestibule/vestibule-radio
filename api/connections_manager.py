@@ -36,6 +36,11 @@ class CurrentlyPlayingMessage(BaseModel):
     timeSeconds: int
 
 
+class VotesUpdateMessage(BaseModel):
+    type: Literal["votes"] = "votes"
+    votes: dict[str, int]
+
+
 class ConnectionsManager:
     connections: Dict[str, WebSocket]
 
@@ -74,6 +79,10 @@ class ConnectionsManager:
             trackUrl=now_playing.track.url,
             timeSeconds=now_playing.timeElapsedSec,
         )
+        await self._broadcast(message.model_dump())
+
+    async def send_votes(self, votes: dict[str, int]):
+        message = VotesUpdateMessage(votes=votes)
         await self._broadcast(message.model_dump())
 
     async def _broadcast(self, message: dict):
