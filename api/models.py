@@ -23,3 +23,8 @@ class Track(TrackMetadata):
     source: str = ""
     posted_by: str = ""
     posted_at: str = ""
+
+
+class CurrentlyPlaying(BaseModel):
+    track: Track
+    timeElapsedSec: int

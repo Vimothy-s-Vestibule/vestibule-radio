@@ -5,16 +5,15 @@ WebSocket layers added onto this same app, so keep the app object reusable and
 don't bake in REST-only assumptions.
 """
 import logging
-from connections_manager import ConnectionsManager, WSIncomingMessage
-
 import os
-import uuid
+from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, WebSocket
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
-
-from models import Track
+from connections_manager import ConnectionsManager, WSIncomingMessage
+from models import CurrentlyPlaying, Track
+from player import Player
 from store import get_track, load_tracks
 
 # comma-separated origins, e.g. "http://localhost:8001,http://localhost:3000"
@@ -24,8 +23,19 @@ CORS_ORIGINS = [
     if origin.strip()
 ]
 
-app = FastAPI(title="Vestibule Radio API")
 manager = ConnectionsManager()
+player = Player()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    player.on_advance(manager.send_now_playing)
+    await player.start()
+    yield
+    await player.stop()
+
+
+app = FastAPI(title="Vestibule Radio API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -50,26 +60,32 @@ def track(video_id: str) -> Track:
     return found
 
 
+@app.get("/now-playing", response_model=CurrentlyPlaying)
+def now_playing() -> CurrentlyPlaying:
+    return player.get_current_track()
+
+
 @app.websocket("/ws")
-async def now_playing(ws: WebSocket):
+async def now_playing_ws(ws: WebSocket):
     await ws.accept()
     id = await manager.add_client(ws)
-   
-    while True:
-        try:
-            raw = await ws.receive_json()
-            result = WSIncomingMessage.model_validate(raw)
 
-            if result.payload.type == "message":
-                await manager.send_message(result.payload)
-            
-           
-        except Exception as e:
-            logging.error(f"Failed to receive incoming client message: {e}")
-            continue
+    # On connect, send the currently playing song.
+    await manager.send_now_playing(player.get_current_track())
 
-    await manager.remove_client(id)
-        
-        
-        
+    try:
+        while True:
+            try:
+                raw = await ws.receive_json()
+                result = WSIncomingMessage.model_validate(raw)
 
+                if result.payload.type == "message":
+                    await manager.send_message(result.payload)
+
+            except WebSocketDisconnect:
+                break
+            except Exception as e:
+                logging.error(f"Failed to receive incoming client message: {e}")
+                continue
+    finally:
+        await manager.remove_client(id)
