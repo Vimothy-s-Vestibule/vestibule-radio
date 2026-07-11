@@ -77,10 +77,17 @@ constructor(rootEl) {
     // collect references
     this.refs = {};
 
-    let nodes = rootEl.querySelectorAll('[data-ref]');
-    for (let i = 0; i < nodes.length; i++) {
-        let key = nodes[i].dataset.ref;
-        this.refs[key] = nodes[i];
+    let scopes = [rootEl].concat(
+        Array.from(document.querySelectorAll('[data-player-panel]'))
+    );
+
+    for (let s = 0; s < scopes.length; s++) {
+        let nodes = scopes[s].querySelectorAll('[data-ref]');
+
+        for (let i = 0; i < nodes.length; i++) {
+            let key = nodes[i].dataset.ref;
+            this.refs[key] = nodes[i];
+        }
     }
 
     this.actions = {
