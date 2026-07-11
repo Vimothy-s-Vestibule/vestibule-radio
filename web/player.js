@@ -4,7 +4,7 @@ connecting: { tag: '. . .', text: 'CONNECTING' },
 buffering: { tag: 'BUFF', text: 'BUFFERING SIGNAL' },
 playing: { tag: 'LIVE', text: 'TRANSMISSION LOCKED' },
 paused: { tag: 'IDLE', text: 'PAUSED — PRESS PLAY TO RESYNC' },
-error: { tag: 'ERR', text: 'OFF AIR — CHECK STREAM' },
+error: { tag: 'ERR', text: 'OFF AIR — NO PLAYER WIRED' },
 };
 
 // simple padding helper
@@ -41,7 +41,6 @@ class StreamPlayer {
 
 constructor(rootEl) {
     this.root = rootEl;
-    this.src = rootEl.dataset.src;
 
     // collect references
     this.refs = {};
@@ -61,7 +60,9 @@ constructor(rootEl) {
     this.timer = null;
     this.startedAt = 0;
 
-    this.audio = this.createAudioInstance();
+    this.playing = false;
+    this.muted = false;
+    this.volume = 80;
 
     this.bindEvents();
 
@@ -71,39 +72,6 @@ constructor(rootEl) {
     }
 
     this.setState('idle');
-}
-
-
-createAudioInstance() {
-    let previous = this.audio || null;
-
-    let audio = new Audio();
-
-    audio.preload = 'none';
-    audio.crossOrigin = 'anonymous';
-    audio.src = this.src;
-
-    // carry over previous state if available
-    audio.volume = previous ? previous.volume : 0.8;
-    audio.muted  = previous ? previous.muted  : false;
-
-    // guard pattern — avoids weird duplicated events
-    let self = this;
-
-    function attach(eventName, handler) {
-        audio.addEventListener(eventName, function () {
-            if (self.audio === audio) {
-                handler();
-            }
-        });
-    }
-
-    attach('playing', function () { self.setState('playing'); });
-    attach('waiting', function () { self.setState('buffering'); });
-    attach('pause',   function () { self.setState('paused'); });
-    attach('error',   function () { self.setState('error'); });
-
-    return audio;
 }
 
 
@@ -144,39 +112,23 @@ bindEvents() {
 }
 
 
-async toggle() {
-
-    if (!this.audio.paused) {
-        this.audio.pause();
+toggle() {
+    if (this.playing) {
+        this.setState('paused');
         return;
     }
 
-    // streams don’t resume cleanly, so rebuild
-    this.audio = this.createAudioInstance();
-
-    this.setState('connecting');
-
-    try {
-        await this.audio.play();
-    } catch (e) {
-        console.warn('Playback failed', e);
-        this.setState('error');
-    }
+    this.setState('error');
 }
 
 
 stop() {
-    this.audio.pause();
-
-    // full reset (safer?)
-    this.audio = this.createAudioInstance();
-
     this.setState('idle');
 }
 
 
 mute() {
-    this.audio.muted = !this.audio.muted;
+    this.muted = !this.muted;
 
     this.renderMuteButton();
 }
@@ -187,14 +139,14 @@ setVolume(value, options) {
 
     let silent = options.silent === true;
 
-    this.audio.volume = value / 100;
+    this.volume = value;
 
     if (this.refs.volumeReadout) {
         this.refs.volumeReadout.textContent = padLeft(value, 3);
     }
 
     // auto-unmute if needed
-    if (!silent && this.audio.muted && value > 0) {
+    if (!silent && this.muted && value > 0) {
         this.mute();
     }
 }
@@ -218,9 +170,11 @@ setState(name) {
         this.refs.stateText.textContent = state.text;
     }
 
-    this.renderPlayButton(name === 'playing');
+    this.playing = name === 'playing';
 
-    if (name === 'playing') {
+    this.renderPlayButton(this.playing);
+
+    if (this.playing) {
         this.startTimer();
     } else {
         this.stopTimer();
@@ -251,7 +205,7 @@ renderMuteButton() {
     let btn = this.refs.muteBtn;
     if (!btn) return;
 
-    let muted = this.audio.muted;
+    let muted = this.muted;
 
     btn.setAttribute('aria-pressed', muted ? 'true' : 'false');
 
