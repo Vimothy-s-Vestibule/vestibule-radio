@@ -85,7 +85,7 @@
           </div>
         </div>
 
-        <div class="console-deck" id="deck" data-component="stream-player" data-src="/stream" tabindex="0">
+        <div class="console-deck" id="deck" data-component="stream-player" tabindex="0">
           <div class="deck-row">
             <button type="button" id="playBtn" class="xbtn play" aria-label="Play" aria-pressed="false"
                     data-action="toggle" data-ref="playBtn">
@@ -123,10 +123,10 @@
         </div>
 
         <ul class="meta">
-          <li><span>FORMAT</span><span>MP3</span></li>
-          <li><span>BITRATE</span><span>128 KBPS</span></li>
-          <li><span>ENDPOINT</span><span><a href="/stream">/stream</a></span></li>
-          <li><span>STATUS</span><span><a href="/status-json.xsl">/status-json.xsl</a></span></li>
+          <li><span>SOURCE</span><span>YOUTUBE EMBED</span></li>
+          <li><span>QUEUE</span><span><a href="/queue">/queue</a></span></li>
+          <li><span>NOW PLAYING</span><span><a href="/now-playing">/now-playing</a></span></li>
+          <li><span>SYNC</span><span>NOT WIRED YET</span></li>
         </ul>
       </div>
     </section>
@@ -152,9 +152,9 @@
     <section class="block built">
       <h2 class="label">004 / BUILT WITH</h2>
       <ul class="stack">
-        <li><span>LIQUIDSOAP</span><span>SHUFFLE / CROSSFADE</span></li>
-        <li><span>ICECAST</span><span>HTTP STREAM</span></li>
-        <li><span>DOCKER</span><span>COMPOSE</span></li>
+        <li><span>YOUTUBE</span><span>IFRAME PLAYER</span></li>
+        <li><span>FASTAPI</span><span>QUEUE / SYNC</span></li>
+        <li><span>DISCORD BOT</span><span>LINK INGEST</span></li>
         <li><span>HTML / CSS</span><span>THIS PAGE</span></li>
       </ul>
     </section>
@@ -162,10 +162,10 @@
     <section class="block roadmap">
       <h2 class="label">005 / ROADMAP</h2>
       <ul class="todo">
-        <li><span class="box">[ ]</span> DISCORD BOT — AUTO-INGEST LINKS</li>
-        <li><span class="box">[ ]</span> WEB PLAYER — IN-BROWSER LISTEN</li>
+        <li><span class="box">[X]</span> DISCORD BOT — AUTO-INGEST LINKS</li>
+        <li><span class="box">[ ]</span> SYNC SERVER — EVERYONE HEARS THE SAME THING</li>
+        <li><span class="box">[ ]</span> LIVE CHAT — PER-CHANNEL</li>
         <li><span class="box">[ ]</span> SMART QUEUE — UPVOTE / DOWNVOTE</li>
-        <li><span class="box">[ ]</span> CLIPS — STATION IDS BETWEEN TRACKS</li>
       </ul>
     </section>
 
