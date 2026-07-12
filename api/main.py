@@ -4,14 +4,22 @@ REST only for now. The sync server, chat, and voting (separate issues) will be
 WebSocket layers added onto this same app, so keep the app object reusable and
 don't bake in REST-only assumptions.
 """
-
+import logging
 import os
+from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
-from .models import Track
-from .store import get_track, load_tracks
+from connections_manager import (
+    ClientChatMessage,
+    ClientVoteMessage,
+    ConnectionsManager,
+    WSIncomingMessage,
+)
+from models import CurrentlyPlaying, Track
+from player import Player
+from store import get_track, load_tracks
 
 # comma-separated origins, e.g. "http://localhost:8001,http://localhost:3000"
 CORS_ORIGINS = [
@@ -20,7 +28,20 @@ CORS_ORIGINS = [
     if origin.strip()
 ]
 
-app = FastAPI(title="Vestibule Radio API")
+manager = ConnectionsManager()
+player = Player()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    player.on_advance(manager.send_now_playing)
+    player.on_votes_change(manager.send_votes)
+    await player.start()
+    yield
+    await player.stop()
+
+
+app = FastAPI(title="Vestibule Radio API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -45,9 +66,35 @@ def track(video_id: str) -> Track:
     return found
 
 
-@app.get("/now-playing", response_model=Track | None)
-def now_playing() -> Track | None:
-    # placeholder until the sync server exists. for now just the head of the
-    # queue so the frontend has something real to render
-    tracks = load_tracks()
-    return tracks[0] if tracks else None
+@app.get("/now-playing", response_model=CurrentlyPlaying)
+def now_playing() -> CurrentlyPlaying:
+    return player.get_current_track()
+
+
+@app.websocket("/ws")
+async def now_playing_ws(ws: WebSocket):
+    await ws.accept()
+    id = await manager.add_client(ws)
+
+    # On connect, send the currently playing song and current vote totals.
+    await manager.send_now_playing(player.get_current_track())
+    await manager.send_votes(player.get_votes())
+
+    try:
+        while True:
+            try:
+                raw = await ws.receive_json()
+                result = WSIncomingMessage.model_validate(raw)
+
+                if isinstance(result.payload, ClientChatMessage):
+                    await manager.send_message(result.payload)
+                elif isinstance(result.payload, ClientVoteMessage):
+                    await player.vote(result.payload.trackID)
+
+            except WebSocketDisconnect:
+                break
+            except Exception as e:
+                logging.error(f"Failed to receive incoming client message: {e}")
+                continue
+    finally:
+        await manager.remove_client(id)
